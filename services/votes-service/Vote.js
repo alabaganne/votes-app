@@ -1,12 +1,10 @@
 const mongoose = require('mongoose');
 
 const voteSchema = new mongoose.Schema({
-    eventId: {
-        // type: mongoose.Schema.Types.ObjectId,
-        type: Number,
-        required: true,
-    },
+    // optionId belongs to an event (eventId)
+    // Events have an array of options, each option have name and _id fields
     optionId: {
+        // type: mongoose.Schema.Types.ObjectId,
         type: Number,
         required: true,
     },

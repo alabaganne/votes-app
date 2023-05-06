@@ -3,35 +3,36 @@ const app = express();
 const PORT = 3000;
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const { MongoClient } = require('mongodb');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const User = require('./User');
 
-const URI = 'mongodb://localhost:27017/vote-auth-db';
+app.use(cors());
+app.use(bodyParser.json());
 
-const ACCESS_TOKEN_SECRET = 'secret';
-
-const database = new MongoClient(URI, {
-    useUnifiedTopology: true,
-});
+async function main() {
+    await mongoose.connect(process.env.DB_CONNECTION_STRING, {
+        useNewUrlParser: true,
+    });
+    console.log('Connected to MongoDB');
+}
+main();
 
 app.post('/register', (req, res) => {
     const { username, password } = req.body;
     const hashedPassword = bcrypt.hashSync(password, 10);
-    const user = { username, password: hashedPassword };
+    const user = new User({ username, password: hashedPassword });
 
-    database.collection('users').insertOne(user, (err, result) => {
-        if (err) {
-            res.status(500).send({ message: err });
-            return;
-        }
+    user.save();
 
-        res.send({ message: 'User was registered successfully' });
-    });
+    res.status(201).send('User saved');
 });
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
 
-    database.collection('users').findOne({ username }, (err, user) => {
+    User.findOne({ username }, (err, user) => {
         bcrypt.compare(password, user.password, (err, result) => {
             if (err) {
                 res.status(500).send({ message: err });
@@ -43,16 +44,21 @@ app.post('/login', (req, res) => {
                 return;
             }
 
-            const token = jwt.sign({ userId: user._id }, ACCESS_TOKEN_SECRET, {
-                expiresIn: '1h',
-            });
+            const token = jwt.sign(
+                { userId: user._id, isAdmin: user.isAdmin },
+                process.env.ACCESS_TOKEN_SECRET,
+                {
+                    expiresIn: '24h',
+                }
+            );
 
             res.send({ token });
         });
     });
 });
 
-app.post('/validate-token', (req, res) => {
+// Recieve token from other services/"epxress servers" in request.post.token and verify it
+app.post('/verify', (req, res) => {
     const token = req.headers['Authorization'];
 
     if (!token) {
@@ -60,7 +66,7 @@ app.post('/validate-token', (req, res) => {
         return;
     }
 
-    jwt.verify(token, ACCESS_TOKEN_SECRET, (err, user) => {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
         if (err) {
             res.status(403).send({ message: 'Invalid token' });
             return;
@@ -71,5 +77,5 @@ app.post('/validate-token', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log('App listening on port ' + PORT);
+    console.log('Auth service is listening on port ' + PORT);
 });

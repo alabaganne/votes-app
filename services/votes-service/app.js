@@ -9,6 +9,8 @@ const PORT = 3001;
 const cors = require('cors');
 const authMiddleware = require('../auth-middleware');
 
+const Vote = require('./Vote');
+
 app.use(authMiddleware);
 app.use(bodyParser.json());
 app.use(cors());
@@ -37,6 +39,8 @@ app.get('/', function (req, res) {
         res.status(403).send('Forbidden');
     }
 });
+
+// TODO: Get votes by eventId
 
 app.post('/', async (req, res) => {
     // users can vote
