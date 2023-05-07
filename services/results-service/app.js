@@ -38,7 +38,7 @@ function votesByEventId(votes) {
 app.get('/events/:eventId/', function (req, res) {
     // Get votes by eventId
     axios({
-        url: 'http://',
+        url: `${eventsServiceUrl}/${req.params.eventId}`,
     });
     // create votesByEventId map
     // Send response
