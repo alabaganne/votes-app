@@ -2,9 +2,11 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const authMiddleware = require('../auth-middleware');
+const axios = require('axios');
+const authMiddleware = require('../auth-middleware')(axios);
 const cors = require('cors');
 const PORT = 3003;
+const { eventsServiceUrl, votesServiceUrl } = require('../../urls');
 
 async function main() {
     await mongoose.connect(process.env.DB_CONNECTION_STRING, {
@@ -35,13 +37,22 @@ function votesByEventId(votes) {
     return votesByEventId;
 }
 
+// this function counts the votes for each event.options
 app.get('/events/:eventId/', function (req, res) {
     // Get votes by eventId
     axios({
-        url: `${eventsServiceUrl}/${req.params.eventId}`,
-    });
-    // create votesByEventId map
-    // Send response
+        url: `${votesServiceUrl}/${req.params.eventId}`,
+    })
+        .then(function (response) {
+            const votes = response.data;
+
+            // create votesByEventId map and send response
+            res.send(votesByEventId(votes));
+        })
+        .catch(function (err) {
+            console.log(err);
+            res.status(500).send('Error');
+        });
 });
 
 app.listen(PORT, function () {

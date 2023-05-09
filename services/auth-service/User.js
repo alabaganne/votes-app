@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required: true,
+        required: false,
     },
     password: {
         type: String,
@@ -17,8 +17,11 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    region: {
-        type: String,
+    regionId: {
+        // 12 regions
+        // "monastir", "sfax", "sousse", "tunis", "gabes", etc...
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Region',
         required: true,
     },
     createdAt: {

@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
 const PORT = 3000;
@@ -7,6 +8,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const User = require('./User');
+const authMiddleware = require('../auth-middleware');
+const Region = require('./Region');
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -19,10 +22,14 @@ async function main() {
 }
 main();
 
-app.post('/register', (req, res) => {
-    const { username, password } = req.body;
+// ? This route is responsible for creating users, authenticating users, adding and deleting regions AND verifying tokens
+
+app.post('/create-user', authMiddleware, (req, res) => {
+    if (!req.auth.isAdmin) return res.status(403).send('Forbidden');
+
+    const { CIN, password } = req.body;
     const hashedPassword = bcrypt.hashSync(password, 10);
-    const user = new User({ username, password: hashedPassword });
+    const user = new User({ CIN, password: hashedPassword });
 
     user.save();
 
@@ -30,9 +37,9 @@ app.post('/register', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-    const { username, password } = req.body;
+    const { CIN, password } = req.body;
 
-    User.findOne({ username }, (err, user) => {
+    User.findOne({ CIN }, (err, user) => {
         bcrypt.compare(password, user.password, (err, result) => {
             if (err) {
                 res.status(500).send({ message: err });
@@ -68,12 +75,39 @@ app.post('/verify', (req, res) => {
 
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
         if (err) {
-            res.status(403).send({ message: 'Invalid token' });
+            res.status(403).send('Invalid token');
             return;
         }
 
-        res.send({ message: 'Token is valid' });
+        res.send('Token is valid');
     });
+});
+
+app.post('/region', authMiddleware, async (req, res) => {
+    const { name } = req.body;
+
+    if (!req.auth.isAdmin) return res.status(403).send('Forbidden');
+
+    const region = new Region({ name });
+
+    await region.save();
+
+    res.status(201).send('Region saved');
+});
+
+app.delete('/region/:name', authMiddleware, async (req, res) => {
+    const { name } = req.params;
+
+    if (!req.auth.isAdmin) return res.status(403).send('Forbidden');
+
+    try {
+        await Region.deleteOne({ name: name });
+
+        res.send('Region deleted');
+    } catch (err) {
+        console.log(err);
+        res.status(400).send('Error deleting region');
+    }
 });
 
 app.listen(PORT, () => {
