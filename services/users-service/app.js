@@ -9,7 +9,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const User = require('./User');
 const authMiddleware = require('../auth-middleware');
-const Region = require('./Region');
+const Region = require('../regions-service/Region');
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -24,7 +24,7 @@ main();
 
 // ? This route is responsible for creating users, authenticating users, adding and deleting regions AND verifying tokens
 
-app.post('/create-user', authMiddleware, (req, res) => {
+app.post('/', authMiddleware, (req, res) => {
     if (!req.auth.isAdmin) return res.status(403).send('Forbidden');
 
     const { CIN, password } = req.body;
@@ -83,33 +83,12 @@ app.post('/verify', (req, res) => {
     });
 });
 
-app.post('/region', authMiddleware, async (req, res) => {
-    const { name } = req.body;
+app.get('/regions', async (req, res) => {
+    let regions = await Region.find();
 
-    if (!req.auth.isAdmin) return res.status(403).send('Forbidden');
-
-    const region = new Region({ name });
-
-    await region.save();
-
-    res.status(201).send('Region saved');
-});
-
-app.delete('/region/:name', authMiddleware, async (req, res) => {
-    const { name } = req.params;
-
-    if (!req.auth.isAdmin) return res.status(403).send('Forbidden');
-
-    try {
-        await Region.deleteOne({ name: name });
-
-        res.send('Region deleted');
-    } catch (err) {
-        console.log(err);
-        res.status(400).send('Error deleting region');
-    }
+    res.send(regions);
 });
 
 app.listen(PORT, () => {
-    console.log('Auth service is listening on port ' + PORT);
+    console.log('Users service is listening on port ' + PORT);
 });
