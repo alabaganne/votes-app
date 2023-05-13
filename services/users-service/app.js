@@ -8,8 +8,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const User = require('./User');
-const authMiddleware = require('../auth-middleware');
-const Region = require('../regions-service/Region');
+const Region = require('./Region');
+const authMiddleware = require('./auth-middleware');
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -22,8 +22,14 @@ async function main() {
 }
 main();
 
-// ? This route is responsible for creating users, authenticating users, adding and deleting regions AND verifying tokens
+// Get users list from MongoDB
+app.get('/', async (req, res) => {
+    let users = await User.find();
 
+    res.send(users);
+});
+
+// ? This route is responsible for creating users, authenticating users, adding and deleting regions AND verifying tokens
 app.post('/', authMiddleware, (req, res) => {
     if (!req.auth.isAdmin) return res.status(403).send('Forbidden');
 
@@ -36,50 +42,58 @@ app.post('/', authMiddleware, (req, res) => {
     res.status(201).send('User saved');
 });
 
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
     const { CIN, password } = req.body;
 
-    User.findOne({ CIN }, (err, user) => {
-        bcrypt.compare(password, user.password, (err, result) => {
-            if (err) {
-                res.status(500).send({ message: err });
-                return;
+    let user = await User.findOne({ CIN });
+
+    bcrypt.compare(password, user.password, (err, result) => {
+        if (err) {
+            res.status(500).send({ message: err });
+            return;
+        }
+
+        if (!result) {
+            res.status(401).send({ message: 'Wrong credentials' });
+            return;
+        }
+
+        user.password = null;
+
+        const token = jwt.sign(
+            { userId: user._id, isAdmin: user.isAdmin },
+            process.env.ACCESS_TOKEN_SECRET,
+            {
+                expiresIn: '30d',
             }
+        );
 
-            if (!result) {
-                res.status(401).send({ message: 'Invalid password' });
-                return;
-            }
-
-            const token = jwt.sign(
-                { userId: user._id, isAdmin: user.isAdmin },
-                process.env.ACCESS_TOKEN_SECRET,
-                {
-                    expiresIn: '24h',
-                }
-            );
-
-            res.send({ token });
-        });
+        res.send({ token, user });
     });
 });
 
 // Recieve token from other services/"epxress servers" in request.post.token and verify it
 app.post('/verify', (req, res) => {
-    const token = req.headers['Authorization'];
+    const token = req.body.token;
 
     if (!token) {
-        res.status(401).send({ message: 'No token provided' });
+        res.send({ tokenValid: false });
         return;
     }
 
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
         if (err) {
-            res.status(403).send('Invalid token');
-            return;
+            return res.send({
+                tokenValid: false,
+            });
         }
 
-        res.send('Token is valid');
+        console.log('user', user);
+        res.send({
+            tokenValid: true,
+            userId: user.userId,
+            isAdmin: user.isAdmin,
+        });
     });
 });
 

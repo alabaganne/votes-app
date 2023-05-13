@@ -1,64 +1,95 @@
-import React, { useEffect, useState } from "react";
-import ReactDOM from "react-dom";
-import { Close } from "../assets";
+import React, { useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
+import { Close } from '../assets';
+import { useAuth } from '../context/AuthContext';
+import api from '../api';
 
-const UserModal = (props) => {
-  const [selectedItemIndex, setSelectedItemIndex] = useState(null);
+const UserModal = ({ event, toggleModal, getVotes }) => {
+    const [selectedOptionId, setSelectedOptionId] = useState(null);
+    const user = useAuth().user;
 
-  const handleCloseClick = () => {
-    props.onClose();
-  };
+    function submit() {
+        const vote = {
+            eventId: event._id,
+            optionId: selectedOptionId,
+            userId: user._id,
+        };
 
-  const handleCheckboxChange = (i) => {
-    setSelectedItemIndex(i);
-  };
+        api.votes
+            .post(vote)
+            .then((res) => {
+                getVotes();
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+    }
 
-  return ReactDOM.createPortal(
-    <section className="fixed inset-0 z-50 flex items-center justify-center m-4">
-      <div className="fixed inset-0 bg-black opacity-30"></div>
-      <div className="bg-white w-[90%] xs:w-[80%] sm:w-[60%] md:w-[35%] h-[90%] ss:h-4/5 sm:p-8 p-4 rounded-sm z-10 flex flex-col justify-start items-center ">
-        <div className=" w-full flex justify-end">
-          <img
-            src={Close}
-            alt="close"
-            className="cursor-pointer "
-            onClick={handleCloseClick}
-          />
-        </div>
-        <p className="text-typo font-poppins font-medium text-lg w-[40%] text-center mt-4">
-          {props.title} {props.year}
-        </p>
-        <div className=" w-full mt-16 flex flex-col gap-4 overflow-y-auto h-[550px]">
-          {props.list.map((e, i) => (
-            <div
-              key={i}
-              className=" boder-solid border-[1px] break-normal border-primary rounded-sm font-poppins text-sm font-normal text-primary w-full px-3 py-4 flex flex-row justify-between items-center"
-            >
-              <p className=" w-[70%]">{e}</p>
-              <input
-                className=" h-4 w-4"
-                type="checkbox"
-                checked={selectedItemIndex === i}
-                onChange={() => handleCheckboxChange(i)}
-              />
+    return ReactDOM.createPortal(
+        <section className="fixed inset-0 z-50 flex items-center justify-center m-4">
+            <div className="fixed inset-0 bg-black opacity-50"></div>
+            <div className="bg-white max-w-xl w-full sm:p-8 p-4 rounded-xl z-10 items-center shadow-lg">
+                <div className=" w-full flex justify-end">
+                    <img
+                        src={Close}
+                        alt="close"
+                        className="cursor-pointer "
+                        onClick={toggleModal}
+                    />
+                </div>
+                <div className="text-sm text-center">
+                    <h3 className="text-green-600 font-poppins text-3xl font-bold text-center">
+                        {event.name}
+                    </h3>
+                    <div className="text-gray-400">
+                        from{' '}
+                        <span className="text-gray-900">
+                            {new Date(event.startDate).toLocaleDateString()}
+                        </span>{' '}
+                        to{' '}
+                        <span className="text-gray-900">
+                            {new Date(event.endDate).toLocaleDateString()}
+                        </span>
+                    </div>
+                    <p className="mt-4 text-gray-400">{event.description}</p>
+                </div>
+                <div className=" w-full mt-16 flex flex-col gap-4 overflow-y-auto">
+                    {event &&
+                        event.options.map((o, i) => (
+                            <div
+                                key={o._id}
+                                className={
+                                    'border border-green-600 rounded-lg text-sm font-medium text-green-600 w-full px-6 py-4 flex flex-row justify-between items-center transition-all duration-75 ' +
+                                    (selectedOptionId === o._id
+                                        ? '!bg-green-600 !text-white '
+                                        : '') +
+                                    (user.isAdmin
+                                        ? ''
+                                        : 'cursor-pointer hover:bg-green-600 hover:text-white')
+                                }
+                                onClick={() =>
+                                    !user.isAdmin && setSelectedOptionId(o._id)
+                                }
+                            >
+                                <p className=" w-[70%]">{o.name}</p>
+                                {selectedOptionId != o._id && <div>-&gt;</div>}
+                            </div>
+                        ))}
+                </div>
+                <div className="mt-10 flex justify-end gap-3">
+                    <button className="btn-outline-gray" onClick={toggleModal}>
+                        {user.isAdmin ? 'Close' : 'Cancel'}
+                    </button>
+                    {!user.isAdmin && (
+                        <button onClick={submit} className="btn-primary">
+                            Submit
+                        </button>
+                    )}
+                </div>
             </div>
-          ))}
-        </div>
-        <div className=" w-full flex justify-between mt-10 ">
-          <button
-            className=" border-solid border-[1px] border-primary font-poppins text-primary py-1 px-6 rounded-sm"
-            onClick={handleCloseClick}
-          >
-            Cancel
-          </button>
-          <button className=" bg-primary font-poppins text-white py-1 px-6 rounded-sm">
-            Submit
-          </button>
-        </div>
-      </div>
-    </section>,
-    document.body
-  );
+        </section>,
+        document.body
+    );
 };
 
 export default UserModal;

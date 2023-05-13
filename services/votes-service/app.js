@@ -5,13 +5,12 @@ const app = express();
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const axios = require('axios');
-const PORT = 3001;
+const PORT = 3002;
 const cors = require('cors');
 const authMiddleware = require('../auth-middleware')(axios);
 
 const Vote = require('./Vote');
 
-app.use(authMiddleware);
 app.use(bodyParser.json());
 app.use(cors());
 
@@ -25,24 +24,23 @@ main().catch((err) =>
     console.log('Failed to connect to MongoDB with error:', err)
 );
 
-app.get('/', function (req, res) {
+app.get('/', authMiddleware, async function (req, res) {
     // Only admins are able to view all votes
+    let votes;
     if (req.auth.isAdmin) {
-        Vote.find({}, function (err, votes) {
-            if (err) {
-                res.status(500).send('Error');
-            } else {
-                res.send(votes);
-            }
-        });
+        votes = await Vote.find();
+
+        res.send(votes);
     } else {
-        res.status(403).send('Forbidden');
+        const { userId } = req.auth;
+        console.log('userId', userId);
+        votes = await Vote.find({ userId });
+
+        res.send(votes);
     }
 });
 
-// TODO: Get votes by eventId
-
-app.post('/', async (req, res) => {
+app.post('/', authMiddleware, async (req, res) => {
     // users can vote
     const userId = req.auth.userId;
     const { eventId, optionId } = req.body;
@@ -60,6 +58,19 @@ app.post('/', async (req, res) => {
     } else {
         res.status(422).send('Invalid data');
     }
+});
+
+// Delete votes using eventId
+app.delete('/:eventId', authMiddleware, async (req, res) => {
+    console.log('Delete votes endpoint hit');
+    console.log('req.auth', req.auth);
+    if (!req.auth.isAdmin) {
+        return res.status(403).send('Forbidden');
+    }
+
+    await Vote.deleteMany({ eventId: req.params.eventId });
+
+    res.send('Votes deleted');
 });
 
 app.listen(PORT, function () {

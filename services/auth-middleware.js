@@ -1,30 +1,34 @@
 module.exports = function (axios) {
     return function authMiddleware(req, res, next) {
-        const token = req.headers['Authorization'];
+        const authHeader = req.get('Authorization');
 
-        if (!token) {
+        if (!authHeader) {
             return res.status(401).send('Unauthorized');
         }
 
+        const token = authHeader.split(' ')[1];
+
         // Send token to auth service to verify
         axios
-            .post('http://localhost:3001/verify', { token })
-            .then((response) => {
-                if (response.status !== 200) {
+            .post('http://localhost:3000/verify', { token })
+            .then((axiosResponse) => {
+                if (
+                    axiosResponse.status != 200 ||
+                    axiosResponse.data.tokenValid == false
+                ) {
                     return res.status(401).send('Unauthorized');
                 }
 
                 req.auth = {
-                    userId: response.data.userId,
-                    isAdmin: response.data.isAdmin,
+                    userId: axiosResponse.data.userId,
+                    isAdmin: axiosResponse.data.isAdmin,
                 };
 
                 next();
             })
             .catch((err) => {
-                // Token is not valid
                 console.log(err);
-                return res.status(401).send('Unauthorized');
+                return res.status(401).send('Error verifying token');
             });
     };
 };

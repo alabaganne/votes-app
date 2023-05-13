@@ -1,19 +1,26 @@
 import axios from 'axios';
-import {
-    authServiceUrl,
-    eventsServiceUrl,
-    resultsServiceUrl,
-    votesServiceUrl,
-} from '../../urls';
+import urls from './urls';
 
-const authApi = axios.create({ baseURL: authServiceUrl });
-const eventsApi = axios.create({ baseURL: eventsServiceUrl });
-const votesApi = axios.create({ baseURL: votesServiceUrl });
-const resultsApi = axios.create({ baseURL: resultsServiceUrl });
+// available routes: /login
+// POST to /: create user
+// /verify: verify token
+// /regions: return list of regions in the db
+const users = axios.create({ baseURL: urls.userServiceUrl });
+const events = axios.create({ baseURL: urls.eventsServiceUrl });
+const votes = axios.create({ baseURL: urls.votesServiceUrl });
+const results = axios.create({ baseURL: urls.resultsServiceUrl });
+
+function setApiTokens(token) {
+    users.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    events.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    votes.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    results.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
 
 export default {
-    authApi,
-    eventsApi,
-    votesApi,
-    resultsApi,
+    users,
+    events,
+    votes,
+    results,
+    setApiTokens,
 };

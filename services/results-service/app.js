@@ -6,36 +6,64 @@ const axios = require('axios');
 const authMiddleware = require('../auth-middleware')(axios);
 const cors = require('cors');
 const PORT = 3003;
-const { eventsServiceUrl, votesServiceUrl } = require('../../urls');
-
-async function main() {
-    await mongoose.connect(process.env.DB_CONNECTION_STRING, {
-        useNewUrlParser: true,
-    });
-    console.log('Connected to MongoDB');
-}
-main();
+const eventsServiceUrl = 'http://localhost:3001',
+    votesServiceUrl = 'http://localhost:3002';
 
 const app = express();
 
 app.use(bodyParser.json());
 app.use(cors());
 
-app.get('/', authMiddleware, async function (req, res) {
-    // Get all events from events service
-});
-
-function votesByEventId(votes) {
+function votesByOptionId(votes) {
+    let result = {};
     for (let i = 0; i < votes.length; i++) {
         const vote = votes[i];
-        if (!votesByEventId[vote.eventId]) {
-            votesByEventId[vote.eventId] = [];
+        if (!result[vote.optionId]) {
+            result[vote.optionId] = 0;
         }
-        votesByEventId[vote.eventId].push(vote);
+        result[vote.optionId]++;
     }
 
-    return votesByEventId;
+    return result;
 }
+
+function getVotes() {
+    return axios({
+        method: 'get',
+        url: `${votesServiceUrl}/`,
+    })
+        .then(function (response) {
+            console.log('votes response', response.data);
+            return response.data;
+        })
+        .catch(function (err) {
+            console.log(err);
+            return [];
+        });
+}
+
+function getEvents() {
+    return axios({
+        method: 'get',
+        url: `${eventsServiceUrl}/`,
+    })
+        .then(function (response) {
+            return response.data;
+        })
+        .catch(function (err) {
+            console.log(err);
+            return [];
+        });
+}
+
+app.get(
+    '/',
+    /* authMiddleware , */ async function (req, res) {
+        let votes = await getVotes(); // a vote have eventId and optionId and userId
+
+        res.send(votesByOptionId(votes));
+    }
+);
 
 // this function counts the votes for each event.options
 app.get('/events/:eventId/', function (req, res) {
@@ -46,8 +74,8 @@ app.get('/events/:eventId/', function (req, res) {
         .then(function (response) {
             const votes = response.data;
 
-            // create votesByEventId map and send response
-            res.send(votesByEventId(votes));
+            // create votesByOptionId map and send response
+            res.send(votesByOptionId(votes));
         })
         .catch(function (err) {
             console.log(err);

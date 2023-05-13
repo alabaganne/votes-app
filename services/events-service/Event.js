@@ -1,4 +1,4 @@
-const mongoose = require('monngose');
+const mongoose = require('mongoose');
 
 const eventSchema = new mongoose.Schema({
     name: {
@@ -10,7 +10,6 @@ const eventSchema = new mongoose.Schema({
         {
             _id: {
                 type: mongoose.Schema.Types.ObjectId,
-                default: new mongoose.Types.ObjectId(),
             },
             name: {
                 type: String,
@@ -25,6 +24,10 @@ const eventSchema = new mongoose.Schema({
         // Last day to vote
         type: Date,
         required: true,
+    },
+    regionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: false,
     },
 });
 

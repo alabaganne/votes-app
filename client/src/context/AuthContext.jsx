@@ -1,22 +1,23 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import api from '../api';
 
 const AuthContext = createContext();
 
 const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [user, setUser] = useState({});
     const [role, setRole] = useState('user');
     const [isLoading, setIsLoading] = useState(true);
 
-    const login = ({ token, role, userId }) => {
+    const login = ({ token, user }) => {
         if (token && role) {
+            api.setApiTokens(token);
             localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(user));
             setIsAuthenticated(true);
-            setRole(role);
-
-            if (role == 'user') {
-                navigate('/user/' + userId);
-            }
+            setUser(user);
+            setRole(user.isAdmin ? 'admin' : 'user');
         }
     };
     const logout = () => {
@@ -27,6 +28,7 @@ const AuthProvider = ({ children }) => {
 
     const value = {
         isAuthenticated,
+        user,
         role,
         login,
         logout,
@@ -36,8 +38,13 @@ const AuthProvider = ({ children }) => {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            setIsAuthenticated(true);
-            setRole('user');
+            let u = localStorage.getItem('user');
+            if (u) {
+                api.setApiTokens(token);
+                setIsAuthenticated(true);
+                setUser(JSON.parse(u));
+                setRole(u.isAdmin ? 'admin' : 'user');
+            }
         }
         setIsLoading(false);
     }, []);
@@ -55,10 +62,16 @@ const useAuth = () => {
 const RequireAuth = ({ children }) => {
     const { isAuthenticated, role, isLoading } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    console.log('location', location);
 
     useEffect(() => {
         if (!isAuthenticated && !isLoading) {
-            navigate('/Login');
+            navigate('/login');
+        }
+
+        if (isAuthenticated) {
+            console.log('isAuthenticated');
         }
     }, [isAuthenticated]);
 

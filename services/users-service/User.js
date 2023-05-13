@@ -3,11 +3,13 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
     username: {
         type: String,
-        required: true,
+        required: false,
+        unique: true,
     },
     email: {
         type: String,
         required: false,
+        unique: true,
     },
     password: {
         type: String,
@@ -16,6 +18,11 @@ const userSchema = new mongoose.Schema({
     isAdmin: {
         type: Boolean,
         default: false,
+    },
+    CIN: {
+        type: String,
+        required: true,
+        unique: true,
     },
     regionId: {
         // 12 regions

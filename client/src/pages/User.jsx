@@ -1,159 +1,125 @@
-import { Card, UserModal } from "../components";
-import { Logo, Logout } from "../assets";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { useState } from "react";
+import { Card, UserModal } from '../components';
+import { Logo, Logout } from '../assets';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useEffect, useState } from 'react';
+import api from '../api';
+
+function getAllVotes() {
+    return api.votes.get('/').then((res) => res.data);
+}
+function getUserVotes(userId) {
+    return api.votes.get('/?userId=' + userId).then((res) => res.data);
+}
+
+function getAllEvents() {
+    return api.events.get('/').then((res) => res.data);
+}
+function getUserRegionEvents(user) {
+    return api.events.get('?regionId=' + user.regionId).then((res) => res.data);
+}
 
 const User = () => {
-  const elections = [
-    {
-      title: "Presidential election",
-      year: "2022",
-      list: [
-        "Ala Baganne",
-        "Rami Ferjani",
-        "Chebbi Mohamed Aziz",
-        "Chebbah Mohamed Amine",
-      ],
-    },
-    {
-      title: "Presidential election",
-      year: "2022",
-      list: [
-        "Ala Baganne",
-        "Rami Ferjani",
-        "Chebbi Mohamed Aziz",
-        "Chebbah Mohamed Amine",
-      ],
-    },
-    {
-      title: "Presidential election",
-      year: "2022",
-      list: [
-        "Ala Baganne",
-        "Rami Ferjani",
-        "Chebbi Mohamed Aziz",
-        "Chebbah Mohamed Amine",
-      ],
-    },
-    {
-      title: "Presidential election",
-      year: "2022",
-      list: [
-        "Ala Baganne",
-        "Rami Ferjani",
-        "Chebbi Mohamed Aziz",
-        "Chebbah Mohamed Amine",
-      ],
-    },
-    {
-      title: "Presidential election",
-      year: "2022",
-      list: [
-        "Ala Baganne",
-        "Rami Ferjani",
-        "Chebbi Mohamed Aziz",
-        "Chebbah Mohamed Amine",
-      ],
-    },
-    {
-      title: "Presidential election",
-      year: "2022",
-      list: [
-        "Ala Baganne",
-        "Rami Ferjani",
-        "Chebbi Mohamed Aziz",
-        "Chebbah Mohamed Amine",
-      ],
-    },
-    {
-      title: "Presidential election",
-      year: "2023",
-      list: [
-        "Ala Baganne",
-        "Rami Ferjani",
-        "Chebbi Mohamed Aziz",
-        "Chebbah Mohamed Amine",
-      ],
-    },
-    {
-      title: "Presidential election",
-      year: "2022",
-      list: [
-        "Ala Baganne zsadaesvfgvbnbgvfcjnbgfvcngbfvcbgfv defsvbgnh,,nhbgvfcdngbfvc",
-        "Rami Ferjani",
-        "Chebbi Mohamed Aziz",
-        "Chebbah Mohamed Amine",
-        "Chebbah Mohamed Amine",
-        "Chebbah Mohamed Amine",
-        "Chebbah Mohamed Amine",
-        "Chebbah Mohamed Amine",
-      ],
-    },
-  ];
+    const [events, setEvents] = useState([]);
+    const [votes, setVotes] = useState([]);
+    const authUser = useAuth()?.user;
 
-  const { logout } = useAuth();
-  const navigate = useNavigate();
+    function getEvents() {
+        if (authUser.isAdmin) {
+            getAllEvents().then((e) => setEvents(e));
+        } else {
+            getUserRegionEvents(authUser).then((res) => setEvents(res));
+        }
+    }
 
-  const handleClick = () => {
-    logout();
-    navigate("/Login");
-  };
+    useEffect(() => {
+        if (authUser && authUser._id) {
+            getEvents();
+            if (!authUser.isAdmin) {
+                getUserVotes(authUser._id).then((v) => setVotes(v));
+            }
+        }
+    }, [authUser]);
 
-  const [showModal, setShowModal] = useState(false);
-  const [title, setTitle] = useState("");
-  const [year, setYear] = useState("");
-  const [list, setList] = useState([]);
+    const { logout } = useAuth();
+    const navigate = useNavigate();
 
-  const handleConnectClick = (title, year, list) => {
-    setShowModal(true);
-    setTitle(title);
-    setYear(year);
-    setList(list);
-  };
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-  };
+    const [showModal, setShowModal] = useState(false);
+    const [modalEvent, setModalEvent] = useState({});
 
-  return (
-    <section className="w-screen h-screen ">
-      <div className="w-screen h-[10%] flex justify-center">
-        <div className="flex-row flex justify-between w-[90%] h-full px-8 items-center border-b-2 border-solid border-border navbar">
-          <img src={Logo} alt="Logo" />
-          <div className=" flex gap-10">
-            <button onClick={handleClick} className="bg-transparent">
-              <img src={Logout} alt="Logout" />
-            </button>
-            <h1 className="">Username</h1>
-          </div>
+    function toggleModal() {
+        setShowModal(!showModal);
+    }
+
+    function handleVoteClick(event) {
+        setModalEvent(event);
+        toggleModal();
+    }
+
+    return (
+        <div>
+            {/* User Navbar */}
+            <div className="px-12 py-6 flex justify-between items-center border-b">
+                <img src={Logo} alt="Logo" />
+                <div className=" flex gap-10">
+                    <button onClick={handleLogout} className="bg-transparent">
+                        <img src={Logout} alt="Logout" />
+                    </button>
+                    <h1 className="">{authUser.username || 'Username'}</h1>
+                </div>
+            </div>
+
+            <div className="container py-12">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-3xl font-bold">
+                        {authUser.isAdmin
+                            ? 'All Events'
+                            : 'Events in your region'}
+                    </h2>
+                    <div>
+                        {authUser.isAdmin && (
+                            <Link className="btn-primary btn-lg">
+                                Add Event
+                            </Link>
+                        )}
+                    </div>
+                </div>
+                <div className="mt-14">
+                    <div className="grid grid-cols-3 gap-4">
+                        {events.length > 0 ? (
+                            events.map((e) => (
+                                <Card
+                                    key={e._id}
+                                    e={e}
+                                    onVoteClick={() => {
+                                        console.log('e', e);
+                                        handleVoteClick(e);
+                                    }}
+                                    getEvents={() => getEvents()}
+                                    votes={votes}
+                                />
+                            ))
+                        ) : (
+                            <div className="text-center text-gray-400">
+                                No events found
+                            </div>
+                        )}
+                        {showModal && (
+                            <UserModal
+                                event={modalEvent}
+                                toggleModal={toggleModal}
+                            />
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div className=" flex flex-row w-screen h-[90%] justify-center mb-10">
-        <div className=" flex flex-wrap gap-4 w-[90%] h-full mt-20 pb-10 justify-center items-center overflow-y-auto">
-          {elections.map((e, i) => (
-            <Card
-              key={i}
-              Title={e.title}
-              Year={e.year}
-              buttonText={"Vote"}
-              onClick={() => {
-                handleConnectClick(e.title, e.year, e.list);
-              }}
-            />
-          ))}
-          {showModal && (
-            <UserModal
-              onClose={handleCloseModal}
-              title={title}
-              year={year}
-              list={list}
-            />
-          )}
-        </div>
-      </div>
-    </section>
-  );
+    );
 };
 
 export default User;
