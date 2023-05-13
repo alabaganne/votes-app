@@ -45,7 +45,7 @@ app.post('/', authMiddleware, async (req, res) => {
     const userId = req.auth.userId;
     const { eventId, optionId } = req.body;
 
-    if (eventId && optionId) {
+    if (eventId || optionId) {
         const vote = new Vote({
             eventId,
             optionId,
@@ -61,7 +61,7 @@ app.post('/', authMiddleware, async (req, res) => {
 });
 
 // Delete votes using eventId
-app.delete('/:eventId', authMiddleware, async (req, res) => {
+app.delete('events/:eventId', authMiddleware, async (req, res) => {
     console.log('Delete votes endpoint hit');
     console.log('req.auth', req.auth);
     if (!req.auth.isAdmin) {
@@ -71,6 +71,22 @@ app.delete('/:eventId', authMiddleware, async (req, res) => {
     await Vote.deleteMany({ eventId: req.params.eventId });
 
     res.send('Votes deleted');
+});
+
+app.delete('/votes/:voteId', authMiddleware, async (req, res) => {
+    let vote = await Vote.findOne({ _id: req.params.voteId });
+
+    if (!vote) {
+        return res.status(404).send('Vote not found');
+    }
+
+    if (vote.userId == req.auth.userId || req.auth.isAdmin) {
+        await Vote.deleteOne({ _id: req.params.voteId });
+
+        res.send('Vote deleted');
+    } else {
+        return res.status(403).send('Forbidden');
+    }
 });
 
 app.listen(PORT, function () {
