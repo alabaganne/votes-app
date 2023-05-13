@@ -2,44 +2,41 @@ import { Card, UserModal } from '../components';
 import { Logo, Logout } from '../assets';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import api from '../api';
 
-function getAllVotes() {
-    return api.votes.get('/').then((res) => res.data);
-}
 function getUserVotes(userId) {
-    return api.votes.get('/?userId=' + userId).then((res) => res.data);
-}
-
-function getAllEvents() {
-    return api.events.get('/').then((res) => res.data);
-}
-function getUserRegionEvents(user) {
-    return api.events.get('?regionId=' + user.regionId).then((res) => res.data);
+    return api.votes
+        .get('/', {
+            params: {
+                userId,
+            },
+        })
+        .then((res) => res.data);
 }
 
 const User = () => {
     const [events, setEvents] = useState([]);
     const [votes, setVotes] = useState([]);
-    const authUser = useAuth()?.user;
+    const user = useAuth()?.user;
 
     function getEvents() {
-        if (authUser.isAdmin) {
-            getAllEvents().then((e) => setEvents(e));
-        } else {
-            getUserRegionEvents(authUser).then((res) => setEvents(res));
-        }
+        const params = user.isAdmin ? {} : { regionId: user.regionId };
+        return api.events.get('/', params).then((res) => setEvents(res.data));
+    }
+    function getVotes() {
+        const params = user.isAdmin ? {} : { userId: user._id };
+        api.votes.get('/', params).then((res) => {
+            setVotes(res.data);
+        });
     }
 
     useEffect(() => {
-        if (authUser && authUser._id) {
+        if (user && user._id) {
             getEvents();
-            if (!authUser.isAdmin) {
-                getUserVotes(authUser._id).then((v) => setVotes(v));
-            }
+            getVotes();
         }
-    }, [authUser]);
+    }, [user]);
 
     const { logout } = useAuth();
     const navigate = useNavigate();
@@ -61,6 +58,8 @@ const User = () => {
         toggleModal();
     }
 
+    if (!user) return null;
+
     return (
         <div>
             {/* User Navbar */}
@@ -70,19 +69,17 @@ const User = () => {
                     <button onClick={handleLogout} className="bg-transparent">
                         <img src={Logout} alt="Logout" />
                     </button>
-                    <h1 className="">{authUser.username || 'Username'}</h1>
+                    <h1 className="">{user.username || 'Username'}</h1>
                 </div>
             </div>
 
             <div className="container py-12">
                 <div className="flex justify-between items-center">
                     <h2 className="text-3xl font-bold">
-                        {authUser.isAdmin
-                            ? 'All Events'
-                            : 'Events in your region'}
+                        {user.isAdmin ? 'All Events' : 'Events in your region'}
                     </h2>
                     <div>
-                        {authUser.isAdmin && (
+                        {user.isAdmin && (
                             <Link className="btn-primary btn-lg">
                                 Add Event
                             </Link>
@@ -90,7 +87,7 @@ const User = () => {
                     </div>
                 </div>
                 <div className="mt-14">
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {events.length > 0 ? (
                             events.map((e) => (
                                 <Card
@@ -113,6 +110,8 @@ const User = () => {
                             <UserModal
                                 event={modalEvent}
                                 toggleModal={toggleModal}
+                                votes={votes}
+                                getVotes={getVotes}
                             />
                         )}
                     </div>

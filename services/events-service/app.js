@@ -68,7 +68,7 @@ app.delete('/:eventId', authMiddleware, (req, res) => {
 
     axios({
         method: 'delete',
-        url: `http://localhost:3002/${req.params.eventId}`,
+        url: `http://localhost:3002/events/${req.params.eventId}`,
         headers: {
             Authorization: req.get('Authorization'),
         },

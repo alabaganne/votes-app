@@ -4,7 +4,7 @@ import { Close } from '../assets';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
 
-const UserModal = ({ event, toggleModal, getVotes }) => {
+const UserModal = ({ event, toggleModal, getVotes, votes }) => {
     const [selectedOptionId, setSelectedOptionId] = useState(null);
     const user = useAuth().user;
 
@@ -16,27 +16,40 @@ const UserModal = ({ event, toggleModal, getVotes }) => {
         };
 
         api.votes
-            .post(vote)
+            .post('/', vote)
             .then((res) => {
                 getVotes();
+                // toggleModal();
             })
             .catch((err) => {
                 console.log(err);
             });
     }
 
+    const [vote, setVote] = useState(null);
+    useEffect(() => {
+        setVote(null);
+        for (let i = 0; i < votes.length; i++) {
+            if (event._id === votes[i].eventId) {
+                setVote(votes[i]);
+                break;
+            }
+        }
+    }, [votes]);
+
+    function revoke() {
+        // Remove vote
+        api.votes.delete('/votes/' + vote._id).then((res) => {
+            getVotes();
+            setSelectedOptionId(null);
+            // toggleModal();
+        });
+    }
+
     return ReactDOM.createPortal(
         <section className="fixed inset-0 z-50 flex items-center justify-center m-4">
             <div className="fixed inset-0 bg-black opacity-50"></div>
             <div className="bg-white max-w-xl w-full sm:p-8 p-4 rounded-xl z-10 items-center shadow-lg">
-                <div className=" w-full flex justify-end">
-                    <img
-                        src={Close}
-                        alt="close"
-                        className="cursor-pointer "
-                        onClick={toggleModal}
-                    />
-                </div>
                 <div className="text-sm text-center">
                     <h3 className="text-green-600 font-poppins text-3xl font-bold text-center">
                         {event.name}
@@ -60,15 +73,18 @@ const UserModal = ({ event, toggleModal, getVotes }) => {
                                 key={o._id}
                                 className={
                                     'border border-green-600 rounded-lg text-sm font-medium text-green-600 w-full px-6 py-4 flex flex-row justify-between items-center transition-all duration-75 ' +
-                                    (selectedOptionId === o._id
-                                        ? '!bg-green-600 !text-white '
+                                    (selectedOptionId === o._id ||
+                                    vote?.optionId === o._id
+                                        ? '!bg-gray-800 border-gray-800 !text-white '
                                         : '') +
-                                    (user.isAdmin
+                                    (user.isAdmin || vote
                                         ? ''
                                         : 'cursor-pointer hover:bg-green-600 hover:text-white')
                                 }
                                 onClick={() =>
-                                    !user.isAdmin && setSelectedOptionId(o._id)
+                                    !user.isAdmin &&
+                                    !vote &&
+                                    setSelectedOptionId(o._id)
                                 }
                             >
                                 <p className=" w-[70%]">{o.name}</p>
@@ -78,12 +94,27 @@ const UserModal = ({ event, toggleModal, getVotes }) => {
                 </div>
                 <div className="mt-10 flex justify-end gap-3">
                     <button className="btn-outline-gray" onClick={toggleModal}>
-                        {user.isAdmin ? 'Close' : 'Cancel'}
+                        {user.isAdmin || vote ? 'Close' : 'Cancel'}
                     </button>
                     {!user.isAdmin && (
-                        <button onClick={submit} className="btn-primary">
-                            Submit
-                        </button>
+                        <>
+                            {vote ? (
+                                <button
+                                    className="btn btn-danger"
+                                    onClick={revoke}
+                                >
+                                    Revoke
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={submit}
+                                    className="btn-primary"
+                                    disabled={!selectedOptionId}
+                                >
+                                    Submit
+                                </button>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

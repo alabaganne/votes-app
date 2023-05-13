@@ -6,7 +6,7 @@ const AuthContext = createContext();
 
 const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [user, setUser] = useState({});
+    const [user, setUser] = useState(null);
     const [role, setRole] = useState('user');
     const [isLoading, setIsLoading] = useState(true);
 
@@ -23,6 +23,7 @@ const AuthProvider = ({ children }) => {
     const logout = () => {
         localStorage.clear();
         setIsAuthenticated(false);
+        setUser(null);
         setRole('user');
     };
 
