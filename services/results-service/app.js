@@ -56,3 +56,12 @@ function getEvents() {
             return [];
         });
 }
+
+app.get(
+    '/',
+    /* authMiddleware , */ async function (req, res) {
+        let votes = await getVotes(); // a vote have eventId and optionId and userId
+
+        res.send(votesByOptionId(votes));
+    }
+);
