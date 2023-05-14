@@ -65,3 +65,20 @@ app.get(
         res.send(votesByOptionId(votes));
     }
 );
+// this function counts the votes for each event.options
+app.get('/events/:eventId/', function (req, res) {
+    // Get votes by eventId
+    axios({
+        url: `${votesServiceUrl}/${req.params.eventId}`,
+    })
+        .then(function (response) {
+            const votes = response.data;
+
+            // create votesByOptionId map and send response
+            res.send(votesByOptionId(votes));
+        })
+        .catch(function (err) {
+            console.log(err);
+            res.status(500).send('Error');
+        });
+});
