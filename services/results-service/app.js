@@ -17,6 +17,9 @@ function votesByOptionId(votes) {
     let result = {};
     for (let i = 0; i < votes.length; i++) {
         const vote = votes[i];
+        if (!result[vote.optionId]) {
+            result[vote.optionId] = 0;
+        }
         result[vote.optionId]++;
     }
 
