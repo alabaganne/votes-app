@@ -48,5 +48,11 @@ function getEvents() {
         method: 'get',
         url: `${eventsServiceUrl}/`,
     })
-        
+        .then(function (response) {
+            return response.data;
+        })
+        .catch(function (err) {
+            console.log(err);
+            return [];
+        });
 }
