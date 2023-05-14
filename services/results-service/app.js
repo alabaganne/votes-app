@@ -9,3 +9,6 @@ const eventsServiceUrl = 'http://localhost:3001',
     votesServiceUrl = 'http://localhost:3002';
 
 const app = express();
+
+app.use(bodyParser.json());
+app.use(cors());
