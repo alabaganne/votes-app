@@ -33,5 +33,12 @@ function getVotes() {
         method: 'get',
         url: `${votesServiceUrl}/`,
     })
-       
+        .then(function (response) {
+            console.log('votes response', response.data);
+            return response.data;
+        })
+        .catch(function (err) {
+            console.log(err);
+            return [];
+        });
 }
