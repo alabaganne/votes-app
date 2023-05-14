@@ -82,3 +82,7 @@ app.get('/events/:eventId/', function (req, res) {
             res.status(500).send('Error');
         });
 });
+
+app.listen(PORT, function () {
+    console.log(`Results service listening on port ${PORT}`);
+});
