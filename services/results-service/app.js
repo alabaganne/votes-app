@@ -12,3 +12,13 @@ const app = express();
 
 app.use(bodyParser.json());
 app.use(cors());
+
+function votesByOptionId(votes) {
+    let result = {};
+    for (let i = 0; i < votes.length; i++) {
+        const vote = votes[i];
+        result[vote.optionId]++;
+    }
+
+    return result;
+}
