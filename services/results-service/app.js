@@ -42,3 +42,11 @@ function getVotes() {
             return [];
         });
 }
+
+function getEvents() {
+    return axios({
+        method: 'get',
+        url: `${eventsServiceUrl}/`,
+    })
+        
+}
