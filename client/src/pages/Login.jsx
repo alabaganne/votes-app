@@ -32,7 +32,7 @@ const Login = () => {
                     user,
                 });
 
-                navigate('/user/' + user._id);
+                navigate('/events');
             })
             .catch(function (error) {
                 console.log(error);
@@ -58,9 +58,9 @@ const Login = () => {
                         Your voice matters
                     </p>
                 </div>
-                <div className="mt-8 gap-8 flex flex-col w-full">
-                    <label className="w-full flex flex-col gap-2">
-                        <label className="text-xs text-green-600">CIN</label>
+                <div className="mt-8 flex flex-col w-full">
+                    <label className="form-group">
+                        <label>CIN</label>
                         <input
                             className="form-control"
                             type="text"
@@ -70,10 +70,8 @@ const Login = () => {
                             placeholder="12345678"
                         />
                     </label>
-                    <label className="w-full flex flex-col gap-2">
-                        <label className="text-xs text-green-600">
-                            Password
-                        </label>
+                    <label className="form-group">
+                        <label>Password</label>
                         <input
                             className="form-control"
                             type="password"

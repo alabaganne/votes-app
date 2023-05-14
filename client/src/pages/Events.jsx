@@ -15,7 +15,7 @@ function getUserVotes(userId) {
         .then((res) => res.data);
 }
 
-const User = () => {
+const Events = () => {
     const [events, setEvents] = useState([]);
     const [votes, setVotes] = useState([]);
     const user = useAuth()?.user;
@@ -26,9 +26,14 @@ const User = () => {
     }
     function getVotes() {
         const params = user.isAdmin ? {} : { userId: user._id };
-        api.votes.get('/', params).then((res) => {
-            setVotes(res.data);
-        });
+        api.votes
+            .get('/', params)
+            .then((res) => {
+                setVotes(res.data);
+            })
+            .catch((err) => {
+                console.log(err);
+            });
     }
 
     useEffect(() => {
@@ -62,17 +67,6 @@ const User = () => {
 
     return (
         <div>
-            {/* User Navbar */}
-            <div className="px-12 py-6 flex justify-between items-center border-b">
-                <img src={Logo} alt="Logo" />
-                <div className=" flex gap-10">
-                    <button onClick={handleLogout} className="bg-transparent">
-                        <img src={Logout} alt="Logout" />
-                    </button>
-                    <h1 className="">{user.username || 'Username'}</h1>
-                </div>
-            </div>
-
             <div className="container py-12">
                 <div className="flex justify-between items-center">
                     <h2 className="text-3xl font-bold">
@@ -80,7 +74,10 @@ const User = () => {
                     </h2>
                     <div>
                         {user.isAdmin && (
-                            <Link className="btn-primary btn-lg">
+                            <Link
+                                className="btn-primary btn-lg"
+                                to="/events/create"
+                            >
                                 Add Event
                             </Link>
                         )}
@@ -121,4 +118,4 @@ const User = () => {
     );
 };
 
-export default User;
+export default Events;

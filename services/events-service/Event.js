@@ -19,11 +19,13 @@ const eventSchema = new mongoose.Schema({
     ],
     startDate: {
         type: Date,
+        default: Date.now,
     },
     endDate: {
         // Last day to vote
         type: Date,
-        required: true,
+        // Default to 1 week from now
+        default: () => new Date(+new Date() + 7 * 24 * 60 * 60 * 1000),
     },
     regionId: {
         type: mongoose.Schema.Types.ObjectId,

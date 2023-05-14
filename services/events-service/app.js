@@ -31,25 +31,37 @@ app.get('/', async function (req, res) {
     res.send(events);
 });
 
+app.get('/:eventId', async function (req, res) {
+    let event = await Event.findOne({ _id: req.params.eventId });
+
+    res.send(event);
+});
+
 // Only admins can create events
 app.post('/', authMiddleware, async function (req, res) {
     if (!req.auth.isAdmin) {
         return res.status(403).send('Forbidden');
     }
 
-    const { name, description, options, endDate } = req.body;
+    const { name, description, options, startDate, endDate } = req.body;
 
-    if (name && options && endDate) {
+    if (name && options) {
         if (options.length < 2) {
             return res
                 .status(422)
                 .send('options array must contain at least 2 items');
         }
 
+        // Set mongoose id for each option id
+        for (let i = 0; i < options.length; i++) {
+            options[i]._id = new mongoose.Types.ObjectId();
+        }
+
         const event = new Event({
             name,
             description,
             options,
+            startDate,
             endDate,
         });
 
@@ -64,14 +76,11 @@ app.post('/', authMiddleware, async function (req, res) {
 app.delete('/:eventId', authMiddleware, (req, res) => {
     // Send axios request to delete votes using eventId
     // Use mongoose to delete events list
-    if (req.auth.isAdmin == false) return res.status(403).send('Forbidden');
+    if (!req.auth.isAdmin) return res.status(403).send('Forbidden');
 
     axios({
         method: 'delete',
         url: `http://localhost:3002/events/${req.params.eventId}`,
-        headers: {
-            Authorization: req.get('Authorization'),
-        },
     })
         .then(async (axiosResponse) => {
             if (axiosResponse.status == 200) {
@@ -82,7 +91,7 @@ app.delete('/:eventId', authMiddleware, (req, res) => {
         })
         .catch(function (err) {
             console.log(err);
-            res.status(500).send('Error deleting event');
+            res.status(500).send('Axios call to delete event failed');
         });
 });
 

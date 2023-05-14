@@ -38,6 +38,7 @@ const UserModal = ({ event, toggleModal, getVotes, votes }) => {
     }, [votes]);
 
     function revoke() {
+        if (!confirm('Are you sure you want to remove your vote?')) return;
         // Remove vote
         api.votes.delete('/votes/' + vote._id).then((res) => {
             getVotes();
@@ -75,7 +76,7 @@ const UserModal = ({ event, toggleModal, getVotes, votes }) => {
                                     'border border-green-600 rounded-lg text-sm font-medium text-green-600 w-full px-6 py-4 flex flex-row justify-between items-center transition-all duration-75 ' +
                                     (selectedOptionId === o._id ||
                                     vote?.optionId === o._id
-                                        ? '!bg-gray-800 border-gray-800 !text-white '
+                                        ? '!bg-gray-800 !border-gray-800 !text-white '
                                         : '') +
                                     (user.isAdmin || vote
                                         ? ''
