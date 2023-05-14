@@ -61,27 +61,29 @@ app.post('/', authMiddleware, async (req, res) => {
 });
 
 // Delete votes using eventId
-app.delete('events/:eventId', authMiddleware, async (req, res) => {
-    console.log('Delete votes endpoint hit');
-    console.log('req.auth', req.auth);
-    if (!req.auth.isAdmin) {
-        return res.status(403).send('Forbidden');
-    }
+app.delete('/events/:eventId', async (req, res) => {
+    // if (!req.auth.isAdmin) {
+    //     return res.status(403).send('Forbidden');
+    // }
 
-    await Vote.deleteMany({ eventId: req.params.eventId });
+    try {
+        await Vote.deleteMany({ eventId: req.params.eventId });
+    } catch (err) {
+        console.log('Vote not found');
+    }
 
     res.send('Votes deleted');
 });
 
 app.delete('/votes/:voteId', authMiddleware, async (req, res) => {
-    let vote = await Vote.findOne({ _id: req.params.voteId });
-
-    if (!vote) {
-        return res.status(404).send('Vote not found');
-    }
+    const vote = await Vote.findOne({ _id: req.params.voteId });
 
     if (vote.userId == req.auth.userId || req.auth.isAdmin) {
-        await Vote.deleteOne({ _id: req.params.voteId });
+        try {
+            await Vote.deleteOne({ _id: req.params.voteId });
+        } catch (err) {
+            return res.status(200).send('Vote not found');
+        }
 
         res.send('Vote deleted');
     } else {

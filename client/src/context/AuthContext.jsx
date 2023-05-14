@@ -64,15 +64,10 @@ const RequireAuth = ({ children }) => {
     const { isAuthenticated, role, isLoading } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-    console.log('location', location);
 
     useEffect(() => {
         if (!isAuthenticated && !isLoading) {
             navigate('/login');
-        }
-
-        if (isAuthenticated) {
-            console.log('isAuthenticated');
         }
     }, [isAuthenticated]);
 

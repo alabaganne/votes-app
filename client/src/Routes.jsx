@@ -1,5 +1,5 @@
-import { Login, Creation, Stats, User } from './pages';
-import { createBrowserRouter, useNavigate } from 'react-router-dom';
+import { Login, Creation, Stats, Events } from './pages';
+import { Outlet, createBrowserRouter, useNavigate } from 'react-router-dom';
 import { MainLayout, LogLayout } from './components';
 import { useEffect } from 'react';
 import { RequireAdmin, RequireAuth } from './context/AuthContext';
@@ -23,48 +23,40 @@ export const Authenticated = createBrowserRouter([
         ],
     },
     {
-        path: 'admin/',
+        path: '/events',
         element: (
             <RequireAuth>
-                <RequireAdmin>
-                    <MainLayout />,
-                </RequireAdmin>
+                <MainLayout>
+                    <Outlet />
+                </MainLayout>
             </RequireAuth>
         ),
         children: [
             {
                 index: true,
-                element: <User />,
+                element: (
+                    <RequireAuth>
+                        <Events />
+                    </RequireAuth>
+                ),
             },
             {
-                path: 'admin/Stats',
-                element: <Stats />,
+                path: ':eventId',
+                element: (
+                    <RequireAdmin>
+                        <Event />
+                    </RequireAdmin>
+                ),
             },
             {
-                path: 'admin/Creation',
-                element: <Creation />,
+                path: 'create',
+                element: (
+                    <RequireAdmin>
+                        <Creation />
+                    </RequireAdmin>
+                ),
             },
-            // {
-            //   path: "*",
-            //   element: <Redirect />,
-            // },
         ],
-    },
-    {
-        path: 'user/:id?',
-        element: (
-            <RequireAuth>
-                <User />
-            </RequireAuth>
-        ),
-    },
-    {
-        path: '/event/:eventId',
-        element: (
-            <RequireAdmin>
-                <Event />
-            </RequireAdmin>
-        ),
     },
 ]);
 

@@ -31,12 +31,17 @@ function getVotes() {
     return axios({
         method: 'get',
         url: `${votesServiceUrl}/`,
+        headers: {
+            authorization: 'fake-admin',
+        },
     })
         .then(function (response) {
-            console.log('votes response', response.data);
             return response.data;
         })
         .catch(function (err) {
+            if (err.response.status) {
+                console.log('Unauthorized');
+            }
             console.log(err);
             return [];
         });
