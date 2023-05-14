@@ -25,3 +25,13 @@ function votesByOptionId(votes) {
 
     return result;
 }
+
+
+
+function getVotes() {
+    return axios({
+        method: 'get',
+        url: `${votesServiceUrl}/`,
+    })
+       
+}
