@@ -1,7 +1,7 @@
 {
-  "name": "results-service",
+  "name": "final-result-service",
   "version": "1.0.0",
-  "description": "",
+  "description": "this is the service that gives the result of the election",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
