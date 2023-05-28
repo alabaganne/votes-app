@@ -1,0 +1,27 @@
+version: '3'
+services:
+  votes-app__users-service:
+    build: ./services/users-service
+    ports:
+      - '3000:3000'
+    restart: always
+  votes-app_events-service:
+    build: ./services/events-service
+    ports:
+      - '3001:3001'
+    restart: always
+  votes-app__votes-service:
+    build: ./services/votes-service
+    ports:
+      - '3002:3002'
+    restart: always
+  votes-app__results-service:
+    build: ./services/results-service
+    ports:
+      - '3003:3003'
+    restart: always
+  # votes-app__client:
+  #   image: ./client
+  #   ports:
+  #     - '8000:5173'
+  #   restart: always

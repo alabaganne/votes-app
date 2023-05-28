@@ -7,7 +7,7 @@ const mongoose = require('mongoose');
 const axios = require('axios');
 const PORT = 3002;
 const cors = require('cors');
-const authMiddleware = require('../auth-middleware')(axios);
+const authMiddleware = require('./auth-middleware')(axios);
 
 const Vote = require('./Vote');
 

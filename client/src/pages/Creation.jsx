@@ -59,7 +59,7 @@ const Creation = () => {
     };
 
     return (
-        <form className="py-2 w-full max-w-md">
+        <form className="py-2 w-full max-w-md mx-auto">
             <div className="form-group">
                 <h1 className="text-3xl font-bold">Add Event</h1>
             </div>
